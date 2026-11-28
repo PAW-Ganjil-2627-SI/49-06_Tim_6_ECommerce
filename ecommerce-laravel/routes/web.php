@@ -1,50 +1,41 @@
 <?php
 
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PelangganController;
+use App\Http\Controllers\AlamatController;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\ProdukController;
 
-// Halaman utama
 Route::get('/', function () {
-    if (Auth::check()) {
-        return redirect()->route('katalog');
-    }
-
     return redirect()->route('login');
 });
 
-// Login dan Register
-Route::middleware('guest')->group(function () {
-    Route::get('/register', [AuthController::class, 'showRegister'])
-        ->name('register');
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
-    Route::post('/register', [AuthController::class, 'register']);
+Route::middleware('auth')->group(function () {
 
-    Route::get('/login', [AuthController::class, 'showLogin'])
-        ->name('login');
+    Route::get('/profile', [ProfileController::class, 'edit'])
+        ->name('profile.edit');
 
-    Route::post('/login', [AuthController::class, 'login']);
-});
+    Route::patch('/profile', [ProfileController::class, 'update'])
+        ->name('profile.update');
 
-// Logout
-Route::post('/logout', [AuthController::class, 'logout'])
-    ->middleware('auth')
-    ->name('logout');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])
+        ->name('profile.destroy');
 
-// Hak akses Admin dan Staff
-Route::middleware(['auth', 'role:admin,staff'])->group(function () {
-
-    // Read
-    Route::get('/katalog', [ProdukController::class, 'index'])
-        ->name('katalog');
-
-    // Create, Read, Update
-    Route::resource('produk', ProdukController::class)
+    // Admin dan Staff bisa melihat, menambah, dan mengedit pelanggan
+    Route::resource('pelanggan', PelangganController::class)
         ->except(['destroy']);
+
+    // Hanya Admin yang boleh menghapus pelanggan
+    Route::delete('/pelanggan/{pelanggan}',
+        [PelangganController::class, 'destroy'])
+        ->middleware('role:admin')
+        ->name('pelanggan.destroy');
+
+    // Modul alamat tetap bisa diakses pengguna yang sudah login
+    Route::resource('alamat', AlamatController::class);
 });
 
-// Delete hanya untuk Admin
-Route::delete('/produk/{produk}', [ProdukController::class, 'destroy'])
-    ->middleware(['auth', 'role:admin'])
-    ->name('produk.destroy');
+require __DIR__.'/auth.php';

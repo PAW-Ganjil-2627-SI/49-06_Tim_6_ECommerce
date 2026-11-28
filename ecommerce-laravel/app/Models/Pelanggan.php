@@ -1,0 +1,24 @@
+<?php
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Pelanggan extends Model
+{
+    protected $table = 'pelanggans';
+
+    protected $fillable = [
+        'nama',
+        'email',
+        'telepon',
+        'tipe_alamat',
+        'alamat',
+        'kota',
+        'kode_pos',
+    ];
+    
+    public function alamats()
+    {
+        return $this->hasMany(Alamat::class);
+    }
+}
